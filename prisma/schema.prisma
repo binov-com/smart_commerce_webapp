@@ -13,7 +13,8 @@ datasource db {
 
 // User Role
 enum UserRole {
-  ADMINISTRATOR
+  MASTER
+  ADMIN
   USER
   DELIVERY_MAN
 }
@@ -58,17 +59,17 @@ model Franchise {
 
 // Users Table
 model User {
-  id          String    @id @default(uuid())
-  franchiseId String
+  id          String     @id @default(uuid())
+  franchiseId String?
   firstName   String
   lastName    String
   email       String
   password    String
   phone       String?
-  role        UserRole  @default(USER)
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
-  franchise   Franchise @relation(fields: [franchiseId], references: [id])
+  role        UserRole   @default(USER)
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+  franchise   Franchise? @relation(fields: [franchiseId], references: [id])
   Order       Order[]
 
   @@index([franchiseId])
@@ -123,10 +124,11 @@ model ProductPricing {
 
 // Options Table
 model Option {
-  id        String   @id @default(uuid())
-  name      String
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id         String   @id @default(uuid())
+  name       String
+  isMultiple Boolean
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
 }
 
 // Variants Table

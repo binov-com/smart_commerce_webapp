@@ -10,7 +10,7 @@ const poppins = Poppins({
 });
 
 export const metadata: Metadata = {
-  title: 'Smart Commerce for Franchises',
+  title: 'Admin | Smart Commerce for Franchises',
   description: 'Created by Binov company',
 }
 
