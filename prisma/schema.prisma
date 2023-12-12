@@ -11,28 +11,272 @@ datasource db {
   relationMode = "prisma"
 }
 
-model Product {
-  id          String   @id @default(uuid())
-  name        String
-  description String?
-  image       String?
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-
-  Pricing Pricing[]
+// User Role
+enum UserRole {
+  ADMINISTRATOR
+  USER
+  DELIVERY_MAN
 }
 
-model Pricing {
-  id       String @id @default(uuid())
-  onsite   Float
-  takeaway Float
-  delivery Float
+// Order Mode
+enum OrderMode {
+  ON_SITE
+  TAKE_AWAY
+  DELIVERY
+}
 
-  productId String
-  product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+// Order Status
+enum OrderStatus {
+  VALID
+  IN_PROGRESS
+  SHIPPING_PROGRESS
+  DELIVERED
+}
 
+// Return Status
+enum ReturnStatus {
+  REQUESTED
+  APPROVED
+  REJECTED
+  PROCESSED
+}
+
+// Franchises Table
+model Franchise {
+  id             String           @id @default(uuid())
+  name           String
+  street1        String
+  street2        String?
+  city           String
+  postalCode     String
+  country        String
+  createdAt      DateTime         @default(now())
+  updatedAt      DateTime         @updatedAt
+  User           User[]
+  ProductPricing ProductPricing[]
+}
+
+// Users Table
+model User {
+  id          String    @id @default(uuid())
+  franchiseId String
+  firstName   String
+  lastName    String
+  email       String
+  password    String
+  phone       String?
+  role        UserRole  @default(USER)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  franchise   Franchise @relation(fields: [franchiseId], references: [id])
+  Order       Order[]
+
+  @@index([franchiseId])
+}
+
+// ProductCategories Table
+model ProductCategory {
+  id        String    @id @default(uuid())
+  name      String
+  imageUrl  String?
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  Product   Product[]
+}
+
+// Products Table
+model Product {
+  id                String           @id @default(uuid())
+  productCategoryId String
+  name              String
+  description       String?
+  imageUrl          String?
+  createdAt         DateTime         @default(now())
+  updatedAt         DateTime         @updatedAt
+  category          ProductCategory  @relation(fields: [productCategoryId], references: [id])
+  ProductPricing    ProductPricing[]
+  Variant           Variant[]
+  OrderItem         OrderItem[]
+
+  @@index([productCategoryId])
+}
+
+// ProductPricing Table
+model ProductPricing {
+  id            String    @id @default(uuid())
+  productId     String
+  franchiseId   String
+  onSitePrice   Float?
+  onSiteTax     Float?
+  takeAwayPrice Float?
+  takeAwayTax   Float?
+  deliveryPrice Float?
+  deliveryTax   Float?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  product       Product   @relation(fields: [productId], references: [id])
+  franchise     Franchise @relation(fields: [franchiseId], references: [id])
+
+  @@index([productId])
+  @@index([franchiseId])
+}
+
+// Options Table
+model Option {
+  id        String   @id @default(uuid())
+  name      String
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+}
 
-  @@index([productId], name: "productId")
+// Variants Table
+model Variant {
+  id               String             @id @default(uuid())
+  productId        String?
+  optionId         String
+  franchiseId      String
+  supplementPrice  Float
+  name             String
+  imageUrl         String
+  createdAt        DateTime           @default(now())
+  updatedAt        DateTime           @updatedAt
+  product          Product?           @relation(fields: [productId], references: [id])
+  OrderItemVariant OrderItemVariant[]
+  ReturnItem       ReturnItem[]
+
+  @@index([productId])
+}
+
+// Customers Table
+model Customer {
+  id        String    @id @default(uuid())
+  firstName String
+  lastName  String
+  email     String
+  phone     String
+  password  String
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  Address   Address[]
+  Order     Order[]
+  Return    Return[]
+}
+
+// Addresses Table
+model Address {
+  id         String   @id @default(uuid())
+  customerId String
+  name       String
+  isInvoice  Boolean
+  vatNumber  String?
+  street1    String
+  street2    String?
+  city       String
+  postalCode String
+  country    String
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+  customer   Customer @relation(fields: [customerId], references: [id])
+  Order      Order[]
+
+  @@index([customerId])
+}
+
+// Orders Table
+model Order {
+  id              String      @id @default(uuid())
+  customerId      String
+  addressId       String
+  mode            OrderMode   @default(ON_SITE)
+  status          OrderStatus @default(VALID)
+  orderDateTime   DateTime
+  pickupDateTime  DateTime?
+  deliveryManId   String?
+  comment         String?
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
+  customer        Customer    @relation(fields: [customerId], references: [id])
+  deliveryAddress Address     @relation(fields: [addressId], references: [id])
+  deliveryMan     User?       @relation(fields: [deliveryManId], references: [id])
+  OrderItem       OrderItem[]
+  Return          Return[]
+
+  @@index([customerId])
+  @@index([addressId])
+  @@index([deliveryManId])
+}
+
+// OrderItems Table
+model OrderItem {
+  id               String             @id @default(uuid())
+  orderId          String
+  productId        String
+  name             String
+  quantity         Int
+  price            Float
+  tax              Float
+  totalPrice       Float
+  createdAt        DateTime           @default(now())
+  updatedAt        DateTime           @updatedAt
+  order            Order              @relation(fields: [orderId], references: [id])
+  product          Product            @relation(fields: [productId], references: [id])
+  OrderItemVariant OrderItemVariant[]
+  ReturnItem       ReturnItem[]
+
+  @@index([orderId])
+  @@index([productId])
+}
+
+// OrderItemVariants Table
+model OrderItemVariant {
+  id          String    @id @default(uuid())
+  orderItemId String
+  variantId   String
+  name        String
+  quantity    Int
+  price       Float
+  tax         Float
+  totalPrice  Float
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  orderItem   OrderItem @relation(fields: [orderItemId], references: [id])
+  variant     Variant   @relation(fields: [variantId], references: [id])
+
+  @@index([orderItemId])
+  @@index([variantId])
+}
+
+// Returns Table
+model Return {
+  id         String       @id @default(uuid())
+  orderId    String
+  customerId String
+  reason     String
+  status     ReturnStatus @default(REQUESTED)
+  createdAt  DateTime     @default(now())
+  updatedAt  DateTime     @updatedAt
+  order      Order        @relation(fields: [orderId], references: [id])
+  customer   Customer     @relation(fields: [customerId], references: [id])
+  ReturnItem ReturnItem[]
+
+  @@index([orderId])
+  @@index([customerId])
+}
+
+// ReturnItems Table
+model ReturnItem {
+  id          String    @id @default(uuid())
+  returnId    String
+  orderItemId String
+  variantId   String
+  quantity    Int
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  return      Return    @relation(fields: [returnId], references: [id])
+  orderItem   OrderItem @relation(fields: [orderItemId], references: [id])
+  variant     Variant   @relation(fields: [variantId], references: [id])
+
+  @@index([returnId])
+  @@index([orderItemId])
+  @@index([variantId])
 }
