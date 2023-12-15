@@ -19,6 +19,36 @@ enum UserRole {
   DELIVERY_MAN
 }
 
+// Audit Action
+enum AuditAction {
+  CREATE
+  UPDATE
+  DELETE
+}
+
+// Audit Table
+enum AuditedTable {
+  Franchisor
+  FranchisorContact
+  Franchise
+  User
+  ProductCategory
+  Product
+  ProductPricing
+  Option
+  Variant
+  Customer
+  Address
+  Cart
+  CartItem
+  CartItemVariants
+  Order
+  OrderItem
+  OrderItemVariant
+  Return
+  ReturnItem
+}
+
 // Order Mode
 enum OrderMode {
   ON_SITE
@@ -42,69 +72,120 @@ enum ReturnStatus {
   PROCESSED
 }
 
+// Franchisors Table
+model Franchisor {
+  id        String   @id @default(uuid())
+  name      String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  isDeleted Boolean   @default(false)
+  deletedAt DateTime?
+
+  Franchise         Franchise[]
+  FranchisorContact FranchisorContact[]
+  Address           Address[]
+}
+
+model FranchisorContact {
+  id           String   @id @default(uuid())
+  franchisorId String
+  firstName    String
+  lastName     String
+  email        String
+  phone        String
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  isDeleted Boolean   @default(false)
+  deletedAt DateTime?
+
+  franchisor Franchisor @relation(fields: [franchisorId], references: [id])
+
+  @@index([franchisorId])
+}
+
 // Franchises Table
 model Franchise {
-  id             String           @id @default(uuid())
-  name           String
-  street1        String
-  street2        String?
-  city           String
-  postalCode     String
-  country        String
-  createdAt      DateTime         @default(now())
-  updatedAt      DateTime         @updatedAt
+  id           String   @id @default(uuid())
+  franchisorId String
+  name         String
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  isDeleted Boolean   @default(false)
+  deletedAt DateTime?
+
   User           User[]
   ProductPricing ProductPricing[]
+  Franchisor     Franchisor       @relation(fields: [franchisorId], references: [id])
+  Address        Address[]
+
+  @@index([franchisorId])
 }
 
 // Users Table
 model User {
-  id          String     @id @default(uuid())
-  franchiseId String?
+  id          String   @id @default(uuid())
+  franchiseId String? // Null only for master user
   firstName   String
   lastName    String
   email       String
   password    String
   phone       String?
-  role        UserRole   @default(USER)
-  createdAt   DateTime   @default(now())
-  updatedAt   DateTime   @updatedAt
-  franchise   Franchise? @relation(fields: [franchiseId], references: [id])
-  Order       Order[]
+  role        UserRole @default(USER)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  isDeleted Boolean   @default(false)
+  deletedAt DateTime?
+
+  franchise Franchise? @relation(fields: [franchiseId], references: [id])
+  Order     Order[]
+  AuditLog  AuditLog[]
 
   @@index([franchiseId])
 }
 
 // ProductCategories Table
 model ProductCategory {
-  id        String    @id @default(uuid())
+  id        String   @id @default(uuid())
   name      String
   imageUrl  String?
-  createdAt DateTime  @default(now())
-  updatedAt DateTime  @updatedAt
-  Product   Product[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  isDeleted Boolean   @default(false)
+  deletedAt DateTime?
+
+  Product Product[]
 }
 
 // Products Table
 model Product {
-  id                String           @id @default(uuid())
+  id                String   @id @default(uuid())
   productCategoryId String
   name              String
   description       String?
   imageUrl          String?
-  createdAt         DateTime         @default(now())
-  updatedAt         DateTime         @updatedAt
-  category          ProductCategory  @relation(fields: [productCategoryId], references: [id])
-  ProductPricing    ProductPricing[]
-  Variant           Variant[]
-  OrderItem         OrderItem[]
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  isDeleted Boolean   @default(false)
+  deletedAt DateTime?
+
+  category       ProductCategory  @relation(fields: [productCategoryId], references: [id])
+  ProductPricing ProductPricing[]
+  Variant        Variant[]
+  OrderItem      OrderItem[]
+  CartItem       CartItem[]
 
   @@index([productCategoryId])
 }
 
 // ProductPricing Table
 model ProductPricing {
-  id            String    @id @default(uuid())
+  id            String   @id @default(uuid())
   productId     String
   franchiseId   String
   onSitePrice   Float?
@@ -113,10 +194,14 @@ model ProductPricing {
   takeAwayTax   Float?
   deliveryPrice Float?
   deliveryTax   Float?
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
-  product       Product   @relation(fields: [productId], references: [id])
-  franchise     Franchise @relation(fields: [franchiseId], references: [id])
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  isDeleted Boolean   @default(false)
+  deletedAt DateTime?
+
+  product   Product   @relation(fields: [productId], references: [id])
+  franchise Franchise @relation(fields: [franchiseId], references: [id])
 
   @@index([productId])
   @@index([franchiseId])
@@ -129,45 +214,63 @@ model Option {
   isMultiple Boolean
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
+
+  isDeleted Boolean   @default(false)
+  deletedAt DateTime?
 }
 
 // Variants Table
 model Variant {
-  id               String             @id @default(uuid())
-  productId        String?
-  optionId         String
-  franchiseId      String
-  supplementPrice  Float
-  name             String
-  imageUrl         String
-  createdAt        DateTime           @default(now())
-  updatedAt        DateTime           @updatedAt
+  id              String   @id @default(uuid())
+  productId       String?
+  optionId        String
+  franchiseId     String
+  supplementPrice Float
+  name            String
+  imageUrl        String
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  isDeleted Boolean   @default(false)
+  deletedAt DateTime?
+
   product          Product?           @relation(fields: [productId], references: [id])
   OrderItemVariant OrderItemVariant[]
   ReturnItem       ReturnItem[]
+  CartItem         CartItem[]
+  CartItemVariants CartItemVariants[]
 
   @@index([productId])
 }
 
 // Customers Table
 model Customer {
-  id        String    @id @default(uuid())
+  id        String   @id @default(uuid())
   firstName String
   lastName  String
   email     String
   phone     String
   password  String
-  createdAt DateTime  @default(now())
-  updatedAt DateTime  @updatedAt
-  Address   Address[]
-  Order     Order[]
-  Return    Return[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  isDeleted Boolean   @default(false)
+  deletedAt DateTime?
+
+  Address Address[]
+  Cart    Cart[]
+  Order   Order[]
+  Return  Return[]
 }
 
 // Addresses Table
 model Address {
-  id         String   @id @default(uuid())
-  customerId String
+  id String @id @default(uuid())
+
+  customerId   String?
+  franchisorId String?
+  franchiseId  String?
+
   name       String
   isInvoice  Boolean
   vatNumber  String?
@@ -178,25 +281,100 @@ model Address {
   country    String
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
-  customer   Customer @relation(fields: [customerId], references: [id])
-  Order      Order[]
+
+  isDeleted Boolean   @default(false)
+  deletedAt DateTime?
+
+  customer   Customer?   @relation(fields: [customerId], references: [id])
+  franchisor Franchisor? @relation(fields: [franchisorId], references: [id])
+  franchise  Franchise?  @relation(fields: [franchiseId], references: [id])
+
+  Order Order[]
+
+  @@index([customerId])
+  @@index([franchisorId])
+  @@index([franchiseId])
+}
+
+// Carts Table
+model Cart {
+  id         String   @id @default(uuid())
+  customerId String
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  isDeleted Boolean   @default(false)
+  deletedAt DateTime?
+
+  customer Customer   @relation(fields: [customerId], references: [id])
+  CartItem CartItem[]
 
   @@index([customerId])
 }
 
+// CartItems Table
+model CartItem {
+  id        String   @id @default(uuid())
+  cartId    String
+  productId String
+  variantId String?
+  quantity  Int
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  isDeleted Boolean   @default(false)
+  deletedAt DateTime?
+
+  cart             Cart               @relation(fields: [cartId], references: [id])
+  product          Product            @relation(fields: [productId], references: [id])
+  variant          Variant?           @relation(fields: [variantId], references: [id])
+  CartItemVariants CartItemVariants[]
+
+  @@index([cartId])
+  @@index([productId])
+  @@index([variantId])
+}
+
+// CartItemVariants Table
+model CartItemVariants {
+  id         String   @id @default(uuid())
+  cartItemId String
+  variantId  String
+  name       String
+  quantity   Int
+  price      Float
+  tax        Float
+  totalPrice Float
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  isDeleted Boolean   @default(false)
+  deletedAt DateTime?
+
+  cartItem CartItem @relation(fields: [cartItemId], references: [id])
+  variant  Variant  @relation(fields: [variantId], references: [id])
+
+  @@index([cartItemId])
+  @@index([variantId])
+}
+
 // Orders Table
 model Order {
-  id              String      @id @default(uuid())
-  customerId      String
-  addressId       String
-  mode            OrderMode   @default(ON_SITE)
-  status          OrderStatus @default(VALID)
-  orderDateTime   DateTime
-  pickupDateTime  DateTime?
-  deliveryManId   String?
-  comment         String?
-  createdAt       DateTime    @default(now())
-  updatedAt       DateTime    @updatedAt
+  id             String      @id @default(uuid())
+  customerId     String
+  addressId      String
+  mode           OrderMode   @default(ON_SITE)
+  status         OrderStatus @default(VALID)
+  orderDateTime  DateTime
+  pickupDateTime DateTime?
+  deliveryManId  String?
+  comment        String?
+  createdAt      DateTime    @default(now())
+  updatedAt      DateTime    @updatedAt
+
+  isDeleted Boolean   @default(false)
+  deletedAt DateTime?
+
   customer        Customer    @relation(fields: [customerId], references: [id])
   deliveryAddress Address     @relation(fields: [addressId], references: [id])
   deliveryMan     User?       @relation(fields: [deliveryManId], references: [id])
@@ -210,16 +388,20 @@ model Order {
 
 // OrderItems Table
 model OrderItem {
-  id               String             @id @default(uuid())
-  orderId          String
-  productId        String
-  name             String
-  quantity         Int
-  price            Float
-  tax              Float
-  totalPrice       Float
-  createdAt        DateTime           @default(now())
-  updatedAt        DateTime           @updatedAt
+  id         String   @id @default(uuid())
+  orderId    String
+  productId  String
+  name       String
+  quantity   Int
+  price      Float
+  tax        Float
+  totalPrice Float
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  isDeleted Boolean   @default(false)
+  deletedAt DateTime?
+
   order            Order              @relation(fields: [orderId], references: [id])
   product          Product            @relation(fields: [productId], references: [id])
   OrderItemVariant OrderItemVariant[]
@@ -231,7 +413,7 @@ model OrderItem {
 
 // OrderItemVariants Table
 model OrderItemVariant {
-  id          String    @id @default(uuid())
+  id          String   @id @default(uuid())
   orderItemId String
   variantId   String
   name        String
@@ -239,10 +421,14 @@ model OrderItemVariant {
   price       Float
   tax         Float
   totalPrice  Float
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
-  orderItem   OrderItem @relation(fields: [orderItemId], references: [id])
-  variant     Variant   @relation(fields: [variantId], references: [id])
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  isDeleted Boolean   @default(false)
+  deletedAt DateTime?
+
+  orderItem OrderItem @relation(fields: [orderItemId], references: [id])
+  variant   Variant   @relation(fields: [variantId], references: [id])
 
   @@index([orderItemId])
   @@index([variantId])
@@ -257,6 +443,10 @@ model Return {
   status     ReturnStatus @default(REQUESTED)
   createdAt  DateTime     @default(now())
   updatedAt  DateTime     @updatedAt
+
+  isDeleted Boolean   @default(false)
+  deletedAt DateTime?
+
   order      Order        @relation(fields: [orderId], references: [id])
   customer   Customer     @relation(fields: [customerId], references: [id])
   ReturnItem ReturnItem[]
@@ -267,18 +457,39 @@ model Return {
 
 // ReturnItems Table
 model ReturnItem {
-  id          String    @id @default(uuid())
+  id          String   @id @default(uuid())
   returnId    String
   orderItemId String
   variantId   String
   quantity    Int
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
-  return      Return    @relation(fields: [returnId], references: [id])
-  orderItem   OrderItem @relation(fields: [orderItemId], references: [id])
-  variant     Variant   @relation(fields: [variantId], references: [id])
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  isDeleted Boolean   @default(false)
+  deletedAt DateTime?
+
+  return    Return    @relation(fields: [returnId], references: [id])
+  orderItem OrderItem @relation(fields: [orderItemId], references: [id])
+  variant   Variant   @relation(fields: [variantId], references: [id])
 
   @@index([returnId])
   @@index([orderItemId])
   @@index([variantId])
+}
+
+model AuditLog {
+  id        String       @id @default(uuid())
+  userId    String
+  action    AuditAction
+  tableName AuditedTable
+  recordId  String // ID of the record that was changed
+  oldValue  Json? // Snapshot of the record before the change (nullable for CREATE action)
+  newValue  Json? // Snapshot of the record after the change (nullable for DELETE action)
+  createdAt DateTime     @default(now())
+
+  user User @relation(fields: [userId], references: [id])
+
+  @@index([tableName])
+  @@index([userId])
+  @@index([createdAt])
 }
