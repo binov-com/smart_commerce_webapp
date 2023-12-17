@@ -4,7 +4,7 @@ const AdminHomePage = () => {
   return (
     <div>
       <h1>Protected</h1>
-      <UserButton afterSignOutUrl="/"/>
+      <UserButton afterSignOutUrl="/" />
     </div>
   )
 }
