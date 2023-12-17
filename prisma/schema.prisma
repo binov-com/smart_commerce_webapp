@@ -72,6 +72,12 @@ enum ReturnStatus {
   PROCESSED
 }
 
+enum PromotionType {
+  RATE
+  AMOUNT
+  SPECIAL
+}
+
 // Franchisors Table
 model Franchisor {
   id        String   @id @default(uuid())
@@ -167,6 +173,9 @@ model Product {
   productCategoryId String
   name              String
   description       String?
+  isPopular         Boolean  @default(false)
+  isPack            Boolean  @default(false)
+  packProductIds    String? // Comma separated product IDs
   imageUrl          String?
   createdAt         DateTime @default(now())
   updatedAt         DateTime @updatedAt
@@ -475,6 +484,25 @@ model ReturnItem {
   @@index([returnId])
   @@index([orderItemId])
   @@index([variantId])
+}
+
+// Promotions Table
+model Promotion {
+  id            String        @id @default(uuid())
+  name          String
+  description   String?
+  startDate     DateTime?
+  endDate       DateTime?
+  promotionType PromotionType
+  rate          Float? // Percentage discount, applicable if promotionType is RATE
+  amount        Float? // Fixed amount discount, applicable if promotionType is AMOUNT
+  conditions    Json? // Conditions like specific products, quantity, or consumption mode
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+  isDeleted     Boolean       @default(false)
+  deletedAt     DateTime?
+
+  @@index([startDate, endDate])
 }
 
 model AuditLog {
