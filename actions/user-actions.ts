@@ -21,6 +21,8 @@ export const actionAddUser = async (
 ): Promise<IUserOutput | null> => {
   const supabase = createServerActionClient<Database>({ cookies })
 
+  console.log('env', process.env.SITE_URL)
+
   const {
     data: { user },
     error,
