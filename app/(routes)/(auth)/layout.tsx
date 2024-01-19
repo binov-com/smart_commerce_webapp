@@ -1,6 +1,5 @@
 import type { Metadata } from 'next'
 import '@/app/globals.css'
-import Link from 'next/link'
 
 export const metadata: Metadata = {
   title: 'Authentication | Smart Commerce for Franchises',

@@ -3,7 +3,7 @@ import { cookies } from 'next/headers'
 import { createServerComponentClient } from '@supabase/auth-helpers-nextjs'
 
 import { redirect } from 'next/navigation'
-import SignOutButton from '@/app/(routes)/(auth)/_components/signout-button'
+import SignOutButton from '@/components/auth/signout-button'
 
 export default async function DashboardPage() {
   const supabase = createServerComponentClient({ cookies })

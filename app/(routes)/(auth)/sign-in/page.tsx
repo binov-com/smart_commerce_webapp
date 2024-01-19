@@ -4,7 +4,7 @@ import { cookies } from 'next/headers'
 import { createServerComponentClient } from '@supabase/auth-helpers-nextjs'
 
 import type { Database } from '@/lib/database.types'
-import SignInForm from '@/app/(routes)/(auth)/_components/signin-form'
+import SignInForm from '@/components/auth/signin-form'
 
 interface Props {
   searchParams: {
