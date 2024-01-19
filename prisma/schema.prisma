@@ -6,9 +6,10 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
-  url      = env("DATABASE_URL")
-  // relationMode = "prisma"
+  provider          = "postgresql"
+  url               = env("DATABASE_URL")
+  directUrl         = env("DIRECT_URL")
+
 }
 
 // User Role
@@ -81,7 +82,7 @@ enum PromotionType {
 
 // Franchisors Table
 model Franchisor {
-  id        String   @id @default(uuid())
+  id        String   @id @default(uuid()) @db.Uuid 
   name      String
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -92,11 +93,13 @@ model Franchisor {
   Franchise         Franchise[]
   FranchisorContact FranchisorContact[]
   Address           Address[]
+
+  @@map("franchisor")
 }
 
 model FranchisorContact {
-  id           String   @id @default(uuid())
-  franchisorId String
+  id           String   @id @default(uuid()) @db.Uuid
+  franchisorId String   @db.Uuid
   firstName    String
   lastName     String
   email        String
@@ -110,12 +113,14 @@ model FranchisorContact {
   franchisor Franchisor @relation(fields: [franchisorId], references: [id])
 
   @@index([franchisorId])
+
+  @@map("franchisor_contact")
 }
 
 // Franchises Table
 model Franchise {
-  id           String   @id @default(uuid())
-  franchisorId String
+  id           String   @id @default(uuid()) @db.Uuid
+  franchisorId String   @db.Uuid
   name         String
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
@@ -123,41 +128,44 @@ model Franchise {
   isDeleted Boolean   @default(false)
   deletedAt DateTime?
 
-  User           User[]
+  User           UserProfile[]
   ProductPricing ProductPricing[]
   Franchisor     Franchisor       @relation(fields: [franchisorId], references: [id])
   Address        Address[]
 
   @@index([franchisorId])
+
+  @@map("franchise")
 }
 
 // Users Table
-model User {
-  id          String   @id @default(uuid())
-  franchiseId String? // Null only for master user
-  firstName   String
-  lastName    String
+model UserProfile {
+  id          String   @id @default(uuid()) @db.Uuid
+  franchiseId String?  @db.Uuid @map("franchise_id") // Null only for master user
+  firstName   String?  @map("first_name")
+  lastName    String?  @map("last_name")
   email       String
-  password    String
   phone       String?
   role        UserRole @default(USER)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @default(now()) @updatedAt @map("updated_at")
 
-  isActivated Boolean   @default(false)
-  isDeleted Boolean   @default(false)
-  deletedAt DateTime?
+  isActivated Boolean   @default(false) @map("is_activated")
+  isDeleted   Boolean   @default(false) @map("is_deleted")
+  deletedAt   DateTime? @map("deleted_at")
 
   franchise Franchise? @relation(fields: [franchiseId], references: [id])
   Order     Order[]
   AuditLog  AuditLog[]
 
   @@index([franchiseId])
+
+  @@map("user_profile")
 }
 
 // ProductCategories Table
 model ProductCategory {
-  id        String   @id @default(uuid())
+  id        String   @id @default(uuid()) @db.Uuid
   name      String
   imageUrl  String?
   createdAt DateTime @default(now())
@@ -167,12 +175,14 @@ model ProductCategory {
   deletedAt DateTime?
 
   Product Product[]
+
+  @@map("product_category")
 }
 
 // Products Table
 model Product {
-  id                String   @id @default(uuid())
-  productCategoryId String
+  id                String   @id @default(uuid()) @db.Uuid
+  productCategoryId String   @db.Uuid
   name              String
   description       String?
   isPopular         Boolean  @default(false)
@@ -192,13 +202,15 @@ model Product {
   CartItem       CartItem[]
 
   @@index([productCategoryId])
+
+  @@map("product")
 }
 
 // ProductPricing Table
 model ProductPricing {
-  id            String   @id @default(uuid())
-  productId     String
-  franchiseId   String
+  id            String   @id @default(uuid()) @db.Uuid
+  productId     String   @db.Uuid
+  franchiseId   String   @db.Uuid
   onSitePrice   Float?
   onSiteTax     Float?
   takeAwayPrice Float?
@@ -216,11 +228,13 @@ model ProductPricing {
 
   @@index([productId])
   @@index([franchiseId])
+
+  @@map("product_pricing")
 }
 
 // Options Table
 model Option {
-  id         String   @id @default(uuid())
+  id         String   @id @default(uuid()) @db.Uuid
   name       String
   isMultiple Boolean
   createdAt  DateTime @default(now())
@@ -228,14 +242,16 @@ model Option {
 
   isDeleted Boolean   @default(false)
   deletedAt DateTime?
+
+  @@map("option")
 }
 
 // Variants Table
 model Variant {
-  id              String   @id @default(uuid())
-  productId       String?
-  optionId        String
-  franchiseId     String
+  id              String   @id @default(uuid()) @db.Uuid
+  productId       String?  @db.Uuid
+  optionId        String   @db.Uuid
+  franchiseId     String   @db.Uuid
   supplementPrice Float
   name            String
   imageUrl        String
@@ -249,14 +265,16 @@ model Variant {
   OrderItemVariant OrderItemVariant[]
   ReturnItem       ReturnItem[]
   CartItem         CartItem[]
-  CartItemVariants CartItemVariants[]
+  CartItemVariants CartItemVariant[]
 
   @@index([productId])
+
+  @@map("variant")
 }
 
 // Customers Table
 model Customer {
-  id        String   @id @default(uuid())
+  id        String   @id @default(uuid())@db.Uuid
   firstName String
   lastName  String
   email     String
@@ -272,15 +290,17 @@ model Customer {
   Cart    Cart[]
   Order   Order[]
   Return  Return[]
+
+  @@map("customer")
 }
 
 // Addresses Table
 model Address {
-  id String @id @default(uuid())
+  id String @id @default(uuid())@db.Uuid
 
-  customerId   String?
-  franchisorId String?
-  franchiseId  String?
+  customerId   String? @db.Uuid
+  franchisorId String? @db.Uuid
+  franchiseId  String? @db.Uuid
 
   name       String
   isInvoice  Boolean
@@ -305,12 +325,14 @@ model Address {
   @@index([customerId])
   @@index([franchisorId])
   @@index([franchiseId])
+
+  @@map("address")
 }
 
 // Carts Table
 model Cart {
-  id         String   @id @default(uuid())
-  customerId String
+  id         String   @id @default(uuid()) @db.Uuid
+  customerId String   @db.Uuid  
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
 
@@ -321,14 +343,16 @@ model Cart {
   CartItem CartItem[]
 
   @@index([customerId])
+
+  @@map("cart")
 }
 
 // CartItems Table
 model CartItem {
-  id        String   @id @default(uuid())
-  cartId    String
-  productId String
-  variantId String?
+  id        String   @id @default(uuid()) @db.Uuid
+  cartId    String   @db.Uuid
+  productId String   @db.Uuid
+  variantId String?  @db.Uuid
   quantity  Int
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -339,18 +363,20 @@ model CartItem {
   cart             Cart               @relation(fields: [cartId], references: [id])
   product          Product            @relation(fields: [productId], references: [id])
   variant          Variant?           @relation(fields: [variantId], references: [id])
-  CartItemVariants CartItemVariants[]
+  CartItemVariants CartItemVariant[]
 
   @@index([cartId])
   @@index([productId])
   @@index([variantId])
+
+  @@map("cart_item")
 }
 
 // CartItemVariants Table
-model CartItemVariants {
-  id         String   @id @default(uuid())
-  cartItemId String
-  variantId  String
+model CartItemVariant {
+  id         String   @id @default(uuid()) @db.Uuid
+  cartItemId String   @db.Uuid
+  variantId  String   @db.Uuid
   name       String
   quantity   Int
   price      Float
@@ -367,18 +393,20 @@ model CartItemVariants {
 
   @@index([cartItemId])
   @@index([variantId])
+
+  @@map("cart_item_variant")
 }
 
 // Orders Table
 model Order {
-  id             String      @id @default(uuid())
-  customerId     String
-  addressId      String
+  id             String      @id @default(uuid()) @db.Uuid
+  customerId     String      @db.Uuid
+  addressId      String      @db.Uuid
   mode           OrderMode   @default(ON_SITE)
   status         OrderStatus @default(VALID)
   orderDateTime  DateTime
   pickupDateTime DateTime?
-  deliveryManId  String?
+  deliveryManId  String?     @db.Uuid
   comment        String?
   createdAt      DateTime    @default(now())
   updatedAt      DateTime    @updatedAt
@@ -386,22 +414,24 @@ model Order {
   isDeleted Boolean   @default(false)
   deletedAt DateTime?
 
-  customer        Customer    @relation(fields: [customerId], references: [id])
-  deliveryAddress Address     @relation(fields: [addressId], references: [id])
-  deliveryMan     User?       @relation(fields: [deliveryManId], references: [id])
+  customer        Customer     @relation(fields: [customerId], references: [id])
+  deliveryAddress Address      @relation(fields: [addressId], references: [id])
+  deliveryMan     UserProfile? @relation(fields: [deliveryManId], references: [id])
   OrderItem       OrderItem[]
   Return          Return[]
 
   @@index([customerId])
   @@index([addressId])
   @@index([deliveryManId])
+
+  @@map("order")
 }
 
 // OrderItems Table
 model OrderItem {
-  id         String   @id @default(uuid())
-  orderId    String
-  productId  String
+  id         String   @id @default(uuid()) @db.Uuid
+  orderId    String   @db.Uuid
+  productId  String   @db.Uuid
   name       String
   quantity   Int
   price      Float
@@ -420,13 +450,15 @@ model OrderItem {
 
   @@index([orderId])
   @@index([productId])
+
+  @@map("order_item")
 }
 
 // OrderItemVariants Table
 model OrderItemVariant {
-  id          String   @id @default(uuid())
-  orderItemId String
-  variantId   String
+  id          String   @id @default(uuid()) @db.Uuid
+  orderItemId String   @db.Uuid
+  variantId   String   @db.Uuid
   name        String
   quantity    Int
   price       Float
@@ -443,13 +475,15 @@ model OrderItemVariant {
 
   @@index([orderItemId])
   @@index([variantId])
+
+  @@map("order_item_variant")
 }
 
 // Returns Table
 model Return {
-  id         String       @id @default(uuid())
-  orderId    String
-  customerId String
+  id         String       @id @default(uuid()) @db.Uuid
+  orderId    String       @db.Uuid
+  customerId String       @db.Uuid
   reason     String
   status     ReturnStatus @default(REQUESTED)
   createdAt  DateTime     @default(now())
@@ -464,14 +498,16 @@ model Return {
 
   @@index([orderId])
   @@index([customerId])
+
+  @@map("return") 
 }
 
 // ReturnItems Table
 model ReturnItem {
-  id          String   @id @default(uuid())
-  returnId    String
-  orderItemId String
-  variantId   String
+  id          String   @id @default(uuid()) @db.Uuid
+  returnId    String   @db.Uuid
+  orderItemId String   @db.Uuid
+  variantId   String   @db.Uuid
   quantity    Int
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
@@ -486,11 +522,13 @@ model ReturnItem {
   @@index([returnId])
   @@index([orderItemId])
   @@index([variantId])
+
+  @@map("return_item")
 }
 
 // Promotions Table
 model Promotion {
-  id            String        @id @default(uuid())
+  id            String        @id @default(uuid()) @db.Uuid
   name          String
   description   String?
   startDate     DateTime?
@@ -505,21 +543,25 @@ model Promotion {
   deletedAt     DateTime?
 
   @@index([startDate, endDate])
+
+  @@map("promotion")
 }
 
 model AuditLog {
-  id        String       @id @default(uuid())
-  userId    String
-  action    AuditAction
-  tableName AuditTable
-  recordId  String // ID of the record that was changed
-  oldValue  Json? // Snapshot of the record before the change (nullable for CREATE action)
-  newValue  Json? // Snapshot of the record after the change (nullable for DELETE action)
-  createdAt DateTime     @default(now())
+  id               String       @id @default(uuid()) @db.Uuid
+  userProfileId    String       @db.Uuid
+  action           AuditAction
+  tableName        AuditTable
+  recordId         String       @db.Uuid// ID of the record that was changed
+  oldValue         Json? // Snapshot of the record before the change (nullable for CREATE action)
+  newValue         Json? // Snapshot of the record after the change (nullable for DELETE action)
+  createdAt        DateTime     @default(now())
 
-  user User @relation(fields: [userId], references: [id])
+  user UserProfile @relation(fields: [userProfileId], references: [id])
 
   @@index([tableName])
-  @@index([userId])
+  @@index([userProfileId])
   @@index([createdAt])
+
+  @@map("audit_log")
 }

@@ -2,16 +2,11 @@ import { cookies } from 'next/headers'
 
 import { createServerComponentClient } from '@supabase/auth-helpers-nextjs'
 
-import { redirect, useRouter } from 'next/navigation'
+import { redirect } from 'next/navigation'
+import SignOutButton from '@/app/(routes)/(auth)/_components/signout-button'
 
-const DashboardPage = async () => {
-  const router = useRouter()
+export default async function DashboardPage() {
   const supabase = createServerComponentClient({ cookies })
-
-  const handleSignOut = async () => {
-    await supabase.auth.signOut()
-    router.refresh()
-  }
 
   const {
     data: { session },
@@ -24,8 +19,7 @@ const DashboardPage = async () => {
   return (
     <div>
       <h1 className="text-2xl font-bold">Dashboard</h1>
+      <SignOutButton />
     </div>
   )
 }
-
-export default DashboardPage

@@ -1,41 +1,31 @@
-'use client'
+import { redirect } from 'next/navigation'
+import { cookies } from 'next/headers'
 
-import { useState } from 'react'
-import { useRouter } from 'next/navigation'
+import { createServerComponentClient } from '@supabase/auth-helpers-nextjs'
 
-import { createClientComponentClient } from '@supabase/auth-helpers-nextjs'
-
-import { Button } from '@/components/ui/button'
 import type { Database } from '@/lib/database.types'
+import SignInForm from '@/app/(routes)/(auth)/_components/signin-form'
 
-export default function Login() {
-  const [email, setEmail] = useState('')
-  const [password, setPassword] = useState('')
-  const router = useRouter()
-  const supabase = createClientComponentClient<Database>()
-
-  const handleSignIn = async () => {
-    await supabase.auth.signInWithPassword({
-      email,
-      password,
-    })
-    router.refresh()
+interface Props {
+  searchParams: {
+    verified?: boolean
   }
+}
+
+export default async function SignInPage({
+  searchParams: { verified },
+}: Props) {
+  const supabase = createServerComponentClient<Database>({ cookies })
+
+  const {
+    data: { session },
+  } = await supabase.auth.getSession()
+
+  if (session) redirect('/')
 
   return (
     <>
-      <input
-        name="email"
-        onChange={(e) => setEmail(e.target.value)}
-        value={email}
-      />
-      <input
-        type="password"
-        name="password"
-        onChange={(e) => setPassword(e.target.value)}
-        value={password}
-      />
-      <Button onClick={handleSignIn}>Sign in</Button>
+      <SignInForm isVerified={verified} />
     </>
   )
 }

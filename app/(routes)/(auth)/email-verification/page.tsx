@@ -4,9 +4,15 @@ import { cookies } from 'next/headers'
 import { createServerComponentClient } from '@supabase/auth-helpers-nextjs'
 
 import type { Database } from '@/lib/database.types'
-import SignUpForm from '@/app/(routes)/(auth)/_components/signup-form'
+import InformationCard from './_components/information-card'
 
-export default async function SignUpPage() {
+interface Props {
+  searchParams: { email: string }
+}
+
+export default async function EmailVerificationPage({
+  searchParams: { email },
+}: Props) {
   const supabase = createServerComponentClient<Database>({ cookies })
 
   const {
@@ -15,5 +21,5 @@ export default async function SignUpPage() {
 
   if (session) redirect('/')
 
-  return <SignUpForm />
+  return <InformationCard email={email} />
 }

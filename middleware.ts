@@ -3,6 +3,7 @@ import { NextResponse } from 'next/server'
 
 import type { NextRequest } from 'next/server'
 import type { Database } from '@/lib/database.types'
+import prismadb from './lib/prismadb'
 
 export async function middleware(req: NextRequest) {
   const res = NextResponse.next()
