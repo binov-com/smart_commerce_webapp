@@ -16,12 +16,22 @@ interface IUserOutput {
   userId: string
 }
 
+const getURL = () => {
+  let url =
+    process?.env?.NEXT_PUBLIC_SITE_URL ?? // Set this to your site URL in production env.
+    process?.env?.NEXT_PUBLIC_VERCEL_URL ?? // Automatically set by Vercel.
+    'http://localhost:3000/'
+  // Make sure to include `https://` when not localhost.
+  url = url.includes('http') ? url : `https://${url}`
+  // Make sure to include a trailing `/`.
+  url = url.charAt(url.length - 1) === '/' ? url : `${url}/`
+  return url
+}
+
 export const actionAddUser = async (
   _user: IUserInput
 ): Promise<IUserOutput | null> => {
   const supabase = createServerActionClient<Database>({ cookies })
-
-  console.log('env', process.env.SITE_URL)
 
   const {
     data: { user },
@@ -30,7 +40,7 @@ export const actionAddUser = async (
     email: _user.email,
     password: _user.password,
     options: {
-      emailRedirectTo: `${process.env.SITE_URL}/sign-in?verified=true`,
+      emailRedirectTo: `${getURL()}sign-in?verified=true`,
       data: {
         firstName: _user.firstName,
         lastName: _user.lastName,
