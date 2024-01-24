@@ -1,9 +1,11 @@
 import { cookies } from 'next/headers'
+import { redirect } from 'next/navigation'
 
 import { createServerComponentClient } from '@supabase/auth-helpers-nextjs'
 
-import { redirect } from 'next/navigation'
 import SignOutButton from '@/components/auth/signout-button'
+
+import { Navbar } from '../_components/navbar'
 
 export const dynamic = 'force-dynamic'
 
@@ -20,7 +22,7 @@ export default async function DashboardPage() {
 
   return (
     <div>
-      <h1 className="text-2xl font-bold">Dashboard</h1>
+      <Navbar />
       <SignOutButton />
     </div>
   )
